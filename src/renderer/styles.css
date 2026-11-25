@@ -1,0 +1,1171 @@
+/* ============================================================
+   QuestBoard — оформление журнала квестов в стиле World of Warcraft
+   Оригинальная графика, без файлов Blizzard: всё на CSS/SVG.
+   ============================================================ */
+
+@font-face {
+  font-family: 'Cinzel';
+  src: url('./fonts/cinzel-400-700.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Spectral';
+  src: url('./fonts/spectral-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Spectral';
+  src: url('./fonts/spectral-600.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --gold: #d9b463;
+  --gold-light: #f6e0a4;
+  --gold-dark: #7a5c22;
+  --gold-deep: #4a3714;
+  --quest-yellow: #ffd100;
+  --ink: #241a0c;
+  --stone-1: #2b2114;
+  --stone-2: #171108;
+  --stone-3: #0d0904;
+  --parchment-1: #efe2bd;
+  --parchment-2: #dcc99b;
+  --text: #d9c8a1;
+  --text-dim: #9c8e70;
+  --green: #8fc96b;
+  --red: #e0574f;
+  --noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.45'/%3E%3C/svg%3E");
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+  font-family: 'Spectral', Georgia, 'Times New Roman', serif;
+  color: var(--text);
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  cursor: default;
+}
+
+.boot {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold);
+  font-family: 'Cinzel', Georgia, serif;
+  letter-spacing: 0.12em;
+  background: rgba(10, 7, 4, 0.9);
+}
+
+/* ---------- каркас окна ---------- */
+
+.app {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.qlog {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border: 3px solid transparent;
+  border-image: linear-gradient(180deg, var(--gold-light) 0%, var(--gold) 18%, var(--gold-deep) 55%, var(--gold) 85%, var(--gold-light) 100%) 1;
+  box-shadow:
+    0 0 0 1px #000,
+    0 10px 34px rgba(0, 0, 0, 0.7),
+    inset 0 0 26px rgba(0, 0, 0, 0.55);
+}
+
+/* Внутренняя двойная рамка — «фаска» игрового окна */
+.qlog::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  pointer-events: none;
+  border: 1px solid rgba(217, 180, 99, 0.28);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.55),
+    inset 0 0 18px rgba(0, 0, 0, 0.45);
+  z-index: 1;
+}
+
+/* Фактура камня */
+.qlog::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--noise);
+  opacity: 0.07;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.qlog > * {
+  position: relative;
+  z-index: 2;
+}
+
+.app.bg-transparent .qlog {
+  background: transparent;
+}
+
+.app.bg-panel .qlog {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(0, 0, 0, 0.25)),
+    radial-gradient(130% 70% at 50% 0%, rgba(48, 38, 22, 0.9) 0%, rgba(20, 15, 8, 0.92) 60%, rgba(12, 8, 4, 0.94) 100%);
+  backdrop-filter: blur(3px);
+}
+
+.app.bg-solid .qlog {
+  background: linear-gradient(180deg, #241b10 0%, #150f08 70%, #0c0804 100%);
+}
+
+.app.bg-transparent .qlog::before {
+  opacity: 0.04;
+}
+
+/* ---------- режим «только текст заданий» ---------- */
+
+.app.bg-text .qlog {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.app.bg-text .qlog::before,
+.app.bg-text .qlog::after {
+  display: none;
+}
+
+/* Весь декор прячем, но оставляем интерактив (шапка нужна для перетаскивания) */
+.app.bg-text .qlog-head,
+.app.bg-text .tabs,
+.app.bg-text .toolbar,
+.app.bg-text .tracker,
+.app.bg-text .playerframe {
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+/* Наводишь курсор — появляется управление */
+.app.bg-text:hover .qlog-head,
+.app.bg-text:hover .tabs,
+.app.bg-text:hover .toolbar,
+.app.bg-text:hover .tracker,
+.app.bg-text:hover .playerframe {
+  opacity: 1;
+}
+
+/* Квесты без подложек и разделителей — чистый текст на экране */
+.app.bg-text .quest {
+  border-bottom: none;
+  background: none;
+  padding: 4px 6px 4px 8px;
+}
+
+.app.bg-text .quest::before {
+  display: none;
+}
+
+.app.bg-text .quest-title {
+  font-size: 16px;
+  text-shadow:
+    0 1px 3px rgba(0, 0, 0, 1),
+    0 0 10px rgba(0, 0, 0, 0.9),
+    0 0 16px rgba(255, 209, 0, 0.14);
+}
+
+.app.bg-text .quest-summary,
+.app.bg-text .objective,
+.app.bg-text .quest-foot {
+  text-shadow:
+    0 1px 3px rgba(0, 0, 0, 1),
+    0 0 8px rgba(0, 0, 0, 0.9);
+}
+
+.app.bg-text .objective {
+  color: #e8dcbc;
+}
+
+.app.bg-text .quest-foot {
+  color: #b9ab8b;
+}
+
+.app.bg-text .scroll {
+  padding-top: 2px;
+}
+
+/* ---------- шапка ---------- */
+
+.qlog-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px 7px;
+  background: linear-gradient(180deg, #3a2d1a 0%, #241a0e 60%, #1a1208 100%);
+  border-bottom: 1px solid var(--gold-dark);
+  box-shadow: inset 0 1px 0 rgba(255, 226, 160, 0.22);
+  -webkit-app-region: drag;
+}
+
+.crest {
+  width: 26px;
+  height: 26px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  font-size: 15px;
+  color: #3a2a08;
+  background: radial-gradient(circle at 35% 30%, var(--gold-light), var(--gold) 55%, #8a6a2f 100%);
+  box-shadow:
+    0 0 0 1px #2a1f0a,
+    0 2px 6px rgba(0, 0, 0, 0.6),
+    inset 0 -2px 4px rgba(90, 60, 10, 0.6);
+}
+
+.titlebar-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+  flex: 1;
+  min-width: 0;
+}
+
+.titlebar-text .game {
+  font-family: 'Cinzel', serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--gold-light);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.titlebar-text .sub {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+}
+
+.window-buttons {
+  display: flex;
+  gap: 6px;
+  -webkit-app-region: no-drag;
+}
+
+.wb {
+  width: 24px;
+  height: 22px;
+  border: 1px solid var(--gold-dark);
+  border-radius: 3px;
+  background: linear-gradient(180deg, #3c2f1c, #221809);
+  color: var(--gold-light);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.wb:hover {
+  filter: brightness(1.35);
+}
+
+.wb.close:hover {
+  background: linear-gradient(180deg, #8a2f22, #4a140c);
+  color: #ffe0d8;
+}
+
+/* ---------- вкладки ---------- */
+
+.tabs {
+  display: flex;
+  gap: 2px;
+  padding: 6px 8px 0;
+  background: linear-gradient(180deg, rgba(20, 14, 7, 0.6), rgba(10, 7, 3, 0.2));
+}
+
+.tab {
+  flex: none;
+  padding: 6px 14px 5px;
+  border: 1px solid rgba(122, 92, 34, 0.8);
+  border-bottom: none;
+  border-radius: 5px 5px 0 0;
+  background: linear-gradient(180deg, #2b2113, #1a1208);
+  color: var(--text-dim);
+  font-family: 'Cinzel', serif;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tab em {
+  font-style: normal;
+  font-size: 10px;
+  opacity: 0.75;
+  margin-left: 4px;
+}
+
+.tab:hover {
+  color: var(--gold-light);
+}
+
+.tab.active {
+  background: linear-gradient(180deg, #4a3a1e, #2c2110);
+  color: var(--gold-light);
+  border-color: var(--gold);
+  box-shadow: 0 -2px 8px rgba(217, 180, 99, 0.25) inset;
+}
+
+/* ---------- панель инструментов ---------- */
+
+.toolbar {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  border-bottom: 1px solid rgba(122, 92, 34, 0.35);
+  background: rgba(8, 5, 2, 0.45);
+}
+
+.search {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 10px;
+  border: 1px solid var(--gold-dark);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.55);
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.7);
+  color: var(--text);
+  font-family: 'Spectral', serif;
+  font-size: 13px;
+  outline: none;
+}
+
+.search:focus {
+  border-color: var(--gold);
+  box-shadow:
+    inset 0 1px 4px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(217, 180, 99, 0.35);
+}
+
+.search::placeholder {
+  color: #6d6149;
+}
+
+/* ---------- кнопки ---------- */
+
+.btn {
+  padding: 6px 13px;
+  border: 1px solid var(--gold-dark);
+  border-radius: 4px;
+  background: linear-gradient(180deg, #35291685, #1d1409);
+  color: var(--gold-light);
+  font-family: 'Cinzel', serif;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: filter 0.15s ease, transform 0.08s ease;
+  white-space: nowrap;
+}
+
+.btn:hover {
+  filter: brightness(1.25);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn.primary {
+  background: linear-gradient(180deg, #e3c274, #a97f31);
+  color: #2b1d05;
+  font-weight: 700;
+  border-color: #6d5119;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 246, 210, 0.7),
+    0 2px 0 #5a4212;
+}
+
+.btn.primary:hover {
+  filter: brightness(1.1);
+}
+
+.btn.icon {
+  width: 28px;
+  height: 26px;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.mini {
+  padding: 2px 8px;
+  border: 1px solid rgba(122, 92, 34, 0.85);
+  border-radius: 3px;
+  background: rgba(30, 22, 10, 0.9);
+  color: var(--text);
+  font-family: 'Spectral', serif;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mini:hover {
+  color: var(--gold-light);
+  border-color: var(--gold);
+}
+
+.mini.ok:hover {
+  color: #c8f0a8;
+}
+
+.mini.danger:hover {
+  color: #ffb4ac;
+  border-color: #8c3a2f;
+}
+
+.mini.add {
+  margin-top: 6px;
+}
+
+/* ---------- список квестов ---------- */
+
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 4px 0 10px;
+}
+
+.scroll::-webkit-scrollbar {
+  width: 10px;
+}
+
+.scroll::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.45);
+  border-left: 1px solid rgba(122, 92, 34, 0.4);
+}
+
+.scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #6b5322, #3a2c11);
+  border: 1px solid #241a08;
+  border-radius: 5px;
+}
+
+.quest {
+  position: relative;
+  padding: 9px 12px 8px 14px;
+  border-bottom: 1px solid rgba(122, 92, 34, 0.22);
+  background: linear-gradient(180deg, rgba(255, 226, 160, 0.025), rgba(0, 0, 0, 0.12));
+  transition: background 0.15s ease;
+}
+
+.quest::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 10px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 2px;
+  background: #4a3a1c;
+}
+
+.quest[data-priority='epic']::before {
+  background: linear-gradient(180deg, #b98cff, #6b3fb5);
+}
+
+.quest[data-priority='high']::before {
+  background: linear-gradient(180deg, #e0574f, #8c2a22);
+}
+
+.quest[data-priority='normal']::before {
+  background: linear-gradient(180deg, #d9b463, #7a5c22);
+}
+
+.quest[data-priority='low']::before {
+  background: linear-gradient(180deg, #6f7f8a, #3a444c);
+}
+
+.quest:hover {
+  background: rgba(255, 226, 160, 0.05);
+}
+
+.quest[data-state='completed'] {
+  opacity: 0.62;
+}
+
+.quest-line {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.quest-title {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--quest-yellow);
+  font-family: 'Cinzel', serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.9),
+    0 0 12px rgba(255, 209, 0, 0.18);
+}
+
+.quest-title:hover {
+  color: #ffe873;
+}
+
+.quest[data-state='completed'] .quest-title {
+  color: #b6ab8d;
+  text-shadow: none;
+}
+
+.quest-meta-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+.quest-level {
+  min-width: 19px;
+  height: 19px;
+  padding: 0 4px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 3px;
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: #f3e0a8;
+  background: linear-gradient(180deg, #4a3a1c, #241a0a);
+  border: 1px solid var(--gold-dark);
+}
+
+.quest-zone {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-style: italic;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quest-summary {
+  margin: 3px 0 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: #b7a884;
+}
+
+.objectives {
+  list-style: none;
+  margin: 5px 0 0;
+  padding: 0;
+}
+
+.objective {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 1px 0;
+  font-size: 13px;
+  color: #e6d7b4;
+  cursor: pointer;
+}
+
+.objective .bullet {
+  font-size: 9px;
+  color: var(--red);
+  flex: none;
+}
+
+.objective.done .bullet {
+  color: var(--green);
+}
+
+.objective.done .obj-text {
+  color: #8d8468;
+  text-decoration: line-through;
+}
+
+.objective:hover .obj-text {
+  color: #fff3cf;
+}
+
+.obj-count {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.quest-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 5px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.quest-foot .giver {
+  color: #c2b189;
+}
+
+.quest-foot .prio {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 9.5px;
+}
+
+.prio-epic {
+  color: #c39cff;
+}
+
+.prio-high {
+  color: #ef8a80;
+}
+
+.prio-normal {
+  color: var(--gold);
+}
+
+.prio-low {
+  color: #90a0aa;
+}
+
+.quest-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition:
+    max-height 0.2s ease,
+    opacity 0.15s ease;
+}
+
+.quest:hover .quest-actions,
+.quest:focus-within .quest-actions {
+  max-height: 44px;
+  opacity: 1;
+}
+
+.progress-hint {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+/* ---------- пустое состояние ---------- */
+
+.empty {
+  padding: 40px 24px;
+  text-align: center;
+  color: var(--text-dim);
+}
+
+.empty-mark {
+  width: 42px;
+  height: 42px;
+  margin: 0 auto 12px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-family: 'Cinzel', serif;
+  font-size: 20px;
+  color: var(--gold);
+  border: 1px solid var(--gold-dark);
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.empty p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* ---------- трекер ---------- */
+
+.tracker {
+  border-top: 1px solid rgba(122, 92, 34, 0.35);
+  background: rgba(6, 4, 2, 0.55);
+  padding: 6px 12px 7px;
+}
+
+.tracker-title {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: var(--gold-dark);
+  margin-bottom: 4px;
+}
+
+.track-row {
+  padding: 2px 0 3px;
+  border-bottom: 1px solid rgba(122, 92, 34, 0.18);
+}
+
+.track-row:last-child {
+  border-bottom: none;
+}
+
+.track-name {
+  display: block;
+  color: var(--quest-yellow);
+  font-family: 'Cinzel', serif;
+  font-size: 12px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.track-objectives {
+  list-style: none;
+  margin: 2px 0 0;
+  padding: 0;
+}
+
+.track-objectives li {
+  display: flex;
+  gap: 5px;
+  align-items: baseline;
+  font-size: 11.5px;
+  color: #cdbc96;
+  line-height: 1.35;
+}
+
+.track-objectives li .bullet {
+  font-size: 8px;
+  color: var(--red);
+}
+
+.track-objectives li.done {
+  color: #8d8468;
+  text-decoration: line-through;
+}
+
+.track-objectives li.done .bullet {
+  color: var(--green);
+}
+
+/* ---------- рамка героя ---------- */
+
+.playerframe {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: linear-gradient(180deg, #241a0e, #120c05);
+  border-top: 1px solid var(--gold-dark);
+  box-shadow: inset 0 1px 0 rgba(255, 226, 160, 0.15);
+}
+
+.portrait {
+  width: 38px;
+  height: 38px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-family: 'Cinzel', serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: #f4e2ad;
+  background:
+    radial-gradient(circle at 35% 28%, #4a3a1c, #1b1409 70%),
+    #14100a;
+  border: 2px solid var(--gold-dark);
+  box-shadow:
+    0 0 0 1px #000 inset,
+    0 2px 8px rgba(0, 0, 0, 0.7);
+}
+
+.player-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.player-name {
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gold-light);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.player-level {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-weight: 400;
+}
+
+.player-class {
+  font-size: 11px;
+  font-style: italic;
+  color: var(--text-dim);
+  margin-bottom: 3px;
+}
+
+.xpbar {
+  position: relative;
+  height: 11px;
+  border: 1px solid #241a08;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.7);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.8);
+  overflow: hidden;
+}
+
+.xpfill {
+  height: 100%;
+  background: linear-gradient(180deg, #6fb7f0, #1c5fa8 70%, #123c6b);
+  box-shadow: 0 0 8px rgba(80, 160, 240, 0.5);
+  transition: width 0.4s ease;
+}
+
+.xptext {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 9px;
+  color: #dfe9f5;
+  text-shadow: 0 1px 2px #000;
+}
+
+.player-actions {
+  display: flex;
+  gap: 6px;
+  flex: none;
+}
+
+/* ---------- изменение размера ---------- */
+
+.resize-grip {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+  background:
+    linear-gradient(135deg, transparent 0 55%, rgba(217, 180, 99, 0.5) 55% 62%, transparent 62% 72%, rgba(217, 180, 99, 0.5) 72% 79%, transparent 79%);
+}
+
+/* ---------- модальные окна (пергамент) ---------- */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+  z-index: 50;
+}
+
+.sheet {
+  width: 100%;
+  max-width: 460px;
+  max-height: 92vh;
+  overflow-y: auto;
+  border: 2px solid #8a6a2f;
+  border-radius: 8px;
+  padding: 16px 18px 18px;
+  color: var(--ink);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 30%),
+    linear-gradient(180deg, var(--parchment-1), var(--parchment-2));
+  box-shadow:
+    0 18px 50px rgba(0, 0, 0, 0.75),
+    inset 0 0 40px rgba(120, 88, 40, 0.28);
+  user-select: text;
+}
+
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(74, 52, 16, 0.4);
+}
+
+.sheet-head h2 {
+  margin: 0;
+  font-family: 'Cinzel', serif;
+  font-size: 18px;
+  letter-spacing: 0.06em;
+  color: #4a3410;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.sheet h3 {
+  margin: 16px 0 8px;
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  color: #6b5225;
+  text-transform: uppercase;
+}
+
+.sheet label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #6b5225;
+}
+
+.sheet input[type='text'],
+.sheet input[type='number'],
+.sheet input[type='date'],
+.sheet input:not([type]),
+.sheet textarea,
+.sheet select {
+  width: 100%;
+  margin-top: 4px;
+  padding: 7px 9px;
+  border: 1px solid #8a6a2f;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.55);
+  color: #241a0c;
+  font-family: 'Spectral', Georgia, serif;
+  font-size: 14px;
+  letter-spacing: normal;
+  text-transform: none;
+  outline: none;
+}
+
+.sheet input:focus,
+.sheet textarea:focus,
+.sheet select:focus {
+  border-color: #5b4520;
+  box-shadow: 0 0 0 1px rgba(91, 69, 32, 0.4);
+}
+
+.sheet textarea {
+  min-height: 60px;
+  resize: vertical;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 12px;
+}
+
+.objectives-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.objective-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.objective-row .bullet {
+  color: #a03328;
+  font-size: 9px;
+}
+
+.objective-row input {
+  margin-top: 0;
+}
+
+.objectives-editor + .mini.add {
+  margin-top: 6px;
+}
+
+.sheet-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(74, 52, 16, 0.35);
+}
+
+.sheet .btn {
+  border-color: #8a6a2f;
+  background: linear-gradient(180deg, #f0e0b4, #c9b184);
+  color: #3a2a08;
+}
+
+.sheet .btn.primary {
+  background: linear-gradient(180deg, #e3c274, #a97f31);
+  color: #2b1d05;
+}
+
+.sheet .mini {
+  background: rgba(255, 255, 255, 0.4);
+  border-color: #8a6a2f;
+  color: #4a3410;
+}
+
+.sheet .mini.danger:hover {
+  color: #8c2a22;
+  border-color: #8c2a22;
+}
+
+.radios {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 5px;
+}
+
+.radio,
+.check {
+  display: flex !important;
+  align-items: center;
+  gap: 7px;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  font-size: 13px !important;
+  color: #4a3410 !important;
+  margin-bottom: 4px !important;
+  cursor: pointer;
+}
+
+.sheet .check input,
+.sheet .radio input {
+  width: auto;
+  margin: 0;
+  accent-color: #8a6a2f;
+}
+
+.range input[type='range'] {
+  width: 100%;
+  margin-top: 6px;
+  accent-color: #8a6a2f;
+}
+
+.settings {
+  max-width: 420px;
+}
+
+/* ---------- уведомление ---------- */
+
+.toast {
+  position: absolute;
+  right: 14px;
+  bottom: 74px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 320px;
+  padding: 9px 13px 9px 9px;
+  border: 1px solid var(--gold-dark);
+  border-radius: 5px;
+  background: linear-gradient(180deg, rgba(42, 33, 18, 0.97), rgba(20, 14, 7, 0.97));
+  box-shadow:
+    0 10px 26px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0 rgba(255, 226, 160, 0.2);
+  animation: toast-in 0.28s ease;
+  z-index: 40;
+}
+
+.toast-icon {
+  width: 26px;
+  height: 26px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  color: #3a2a08;
+  background: radial-gradient(circle at 35% 30%, var(--gold-light), var(--gold) 60%, #8a6a2f);
+}
+
+.toast-title {
+  font-family: 'Cinzel', serif;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--gold-light);
+}
+
+.toast-text {
+  font-size: 12.5px;
+  color: var(--text);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---------- горячая зона при сквозных кликах ---------- */
+
+.app.hot-edge::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 18px;
+  background: linear-gradient(90deg, rgba(217, 180, 99, 0.35), transparent);
+  pointer-events: none;
+  z-index: 60;
+}
