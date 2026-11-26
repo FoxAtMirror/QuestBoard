@@ -2,6 +2,7 @@ node_modules/
 dist/
 dist-electron/
 release/
+release-new/
 *.log
 .vite/
 .DS_Store
