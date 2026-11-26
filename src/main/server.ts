@@ -74,19 +74,17 @@ export class QuestServer extends EventEmitter {
   }
 
   primaryAddress(): string {
-    const nets = os.networkInterfaces();
-    const candidates: string[] = [];
-    for (const list of Object.values(nets)) {
-      for (const net of list ?? []) {
-        if (net.family === 'IPv4' && !net.internal) candidates.push(net.address);
-      }
-    }
-    // Приоритет — частные адреса (192.168.x / 10.x), потом остальные
-    candidates.sort((a, b) => {
-      const priv = (ip: string) => (/^(192\.168|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(ip) ? 0 : 1);
-      return priv(a) - priv(b);
-    });
-    return candidates[0] ?? '127.0.0.1';
+    const addrs = this.addresses();
+    // Приоритет: обычный Wi-Fi/ethernet (192.168.x, 10.x), потом 172.16–31.x,
+    // и лишь потом виртуальные адаптеры (WSL, Docker, Hyper-V).
+    const rank = (ip: string) => {
+      if (/^192\.168\./.test(ip)) return 0;
+      if (/^10\./.test(ip)) return 1;
+      if (/^172\.(1[6-9]|2\d|3[01])\./.test(ip)) return 2;
+      return 3;
+    };
+    addrs.sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
+    return addrs[0] ?? '127.0.0.1';
   }
 
   addresses(): string[] {

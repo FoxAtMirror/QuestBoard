@@ -52,6 +52,13 @@ const api = {
       ipcRenderer.removeListener('ui:open', listener);
     };
   },
+  onServerChanged: (cb: () => void) => {
+    const listener = () => cb();
+    ipcRenderer.on('server:changed', listener);
+    return () => {
+      ipcRenderer.removeListener('server:changed', listener);
+    };
+  },
 };
 
 contextBridge.exposeInMainWorld('questboard', api);

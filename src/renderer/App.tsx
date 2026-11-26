@@ -9,11 +9,12 @@ import {
 import QuestCard from './components/QuestCard';
 import QuestForm from './components/QuestForm';
 import SettingsPanel from './components/SettingsPanel';
+import SharePanel from './components/SharePanel';
 import Toast from './components/Toast';
 import { playLevelUp, playQuestComplete, playQuestReceived } from './lib/sound';
 
 type Tab = 'log' | 'objectives' | 'done';
-type Panel = null | 'new' | 'edit' | 'settings';
+type Panel = null | 'new' | 'edit' | 'settings' | 'share';
 
 const PRIORITY_ORDER: QuestPriority[] = ['epic', 'high', 'normal', 'low'];
 
@@ -37,7 +38,9 @@ export default function App() {
     void reload();
     const offData = window.questboard.onDataChanged(() => void reload());
     const offToast = window.questboard.onToast((payload) => setToast(payload));
-    const offUi = window.questboard.onUiOpen((name) => setPanel(name === 'settings' ? 'settings' : 'new'));
+    const offUi = window.questboard.onUiOpen((name) =>
+      setPanel(name === 'settings' || name === 'share' ? name : 'new'),
+    );
     return () => {
       offData();
       offToast();
@@ -244,6 +247,9 @@ export default function App() {
           <button className="btn primary" onClick={() => setPanel('new')}>
             Выдать квест
           </button>
+          <button className="btn icon" onClick={() => setPanel('share')} title="Выдать квест с другого устройства">
+            ⇄
+          </button>
         </div>
 
         <main className="scroll">
@@ -340,6 +346,7 @@ export default function App() {
         <QuestForm quest={editing} onClose={() => setPanel(null)} onSubmit={handleUpdate} />
       )}
       {panel === 'settings' && <SettingsPanel settings={settings} player={player} onClose={() => setPanel(null)} />}
+      {panel === 'share' && <SharePanel settings={settings} onClose={() => setPanel(null)} />}
 
       {toast && <Toast data={toast} />}
     </div>

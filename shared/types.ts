@@ -70,7 +70,10 @@ export interface AppSettings {
   /** Прижать окно к правому краю экрана */
   dockEnabled: boolean;
   dockSide: 'right' | 'left';
-  /** Включить локальный сервер выдачи квестов */
+  /**
+   * Локальный сервер выдачи квестов с других устройств.
+   * Включён по умолчанию: доступ защищён кодом, ссылка работает в локальной сети.
+   */
   serverEnabled: boolean;
   serverPort: number;
   /** Требовать код доступа при выдаче квеста */
@@ -129,7 +132,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   alwaysOnTop: true,
   dockEnabled: true,
   dockSide: 'right',
-  serverEnabled: false,
+  serverEnabled: true,
   serverPort: 7788,
   requireCode: true,
   launchAtLogin: false,

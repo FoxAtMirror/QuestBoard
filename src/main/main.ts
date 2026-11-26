@@ -195,6 +195,12 @@ function registerHotkeys() {
   }
 }
 
+/** Сообщить интерфейсу, что состояние сервера изменилось */
+function notifyServerChanged() {
+  const win = getMainWindow();
+  if (win && !win.isDestroyed()) win.webContents.send('server:changed');
+}
+
 /** Пересоздать окно — нужно при смене слоя (оверлей ↔ рабочий стол) */
 function recreateWindow() {
   const old = getMainWindow();
@@ -262,8 +268,7 @@ async function restartServer() {
     const ok = await server.start();
     if (!ok) console.error('[server] не удалось занять порт', serverPort);
   }
-  const win = getMainWindow();
-  win?.webContents.send('server:changed');
+  notifyServerChanged();
 }
 
 function bootstrap() {
@@ -297,6 +302,9 @@ function bootstrap() {
     }
   });
 
+  server.on('started', notifyServerChanged);
+  server.on('stopped', notifyServerChanged);
+
   createTray();
   registerHotkeys();
 
@@ -312,6 +320,12 @@ function bootstrap() {
       if (done) return;
       done = true;
       try {
+        // Служебно открыть панель перед снимком (QUESTBOARD_PANEL=share|settings|new)
+        const panel = process.env.QUESTBOARD_PANEL;
+        if (panel) {
+          win.webContents.send('ui:open', panel);
+          await new Promise((r) => setTimeout(r, 700));
+        }
         const image = await win.webContents.capturePage();
         fs.writeFileSync(shotPath, image.toPNG());
         console.log('[shot] сохранено:', shotPath);
@@ -343,7 +357,7 @@ function bootstrap() {
       }
       app.quit();
     };
-    win.webContents.on('did-finish-load', () => setTimeout(capture, 1200));
+    win.webContents.on('did-finish-load', () => setTimeout(capture, 900));
     win.webContents.on('did-fail-load', (_e, code, desc) => console.error('[load] ошибка', code, desc));
     setTimeout(capture, 6000);
   }

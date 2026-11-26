@@ -176,6 +176,7 @@ export function installMockApi() {
       };
     },
     onUiOpen: () => () => undefined,
+    onServerChanged: () => () => undefined,
   };
 
   console.info('[questboard] мок API активен — предпросмотр в браузере');
