@@ -17,8 +17,10 @@
     "start": "electron .",
     "dist": "npm run build && electron-builder",
     "dist:win": "npm run build && electron-builder --win",
+    "dist:win:alt": "npm run build && electron-builder --win --config.directories.output=release-new",
     "dist:mac": "npm run build && electron-builder --mac",
-    "dist:linux": "npm run build && electron-builder --linux"
+    "dist:linux": "npm run build && electron-builder --linux",
+    "release:sync": "node scripts/sync-release.mjs"
   },
   "dependencies": {
     "qrcode": "^1.5.4",

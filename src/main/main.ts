@@ -266,8 +266,8 @@ function openOfferWindow(id: string) {
   }
 
   const { workArea } = screen.getPrimaryDisplay();
-  const width = 470;
-  const height = 430;
+  const width = 430;
+  const height = 400;
 
   const win = new BrowserWindow({
     width,

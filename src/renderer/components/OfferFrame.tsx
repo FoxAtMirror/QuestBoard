@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { QuestOffer } from '@shared/types';
 
 /**
- * Окно «Принять квест» в духе WoW: каменная рамка, золотое название,
- * цели с красными маркерами, награда и кнопки «Принять» / «Отказать».
+ * Окно «Принять квест» в духе WoW:
+ * иконка квеста с «!», гравированная плашка названия, текст,
+ * цели с жёлтыми маркерами, награда и кнопки в стиле игровых.
  */
 export default function OfferFrame({ offerId }: { offerId: string }) {
   const [offer, setOffer] = useState<QuestOffer | null>(null);
@@ -27,55 +28,62 @@ export default function OfferFrame({ offerId }: { offerId: string }) {
   }
 
   if (!offer) {
-    return <div className="offer-frame waiting">Предложение квеста…</div>;
+    return <div className="wow-frame waiting">Предложение квеста…</div>;
   }
 
   const { draft, source } = offer;
   const objectives = draft.objectives ?? [];
 
   return (
-    <div className="offer-frame">
-      <div className="offer-head">
-        <div className="offer-mark">!</div>
-        <div className="offer-headings">
-          <div className="offer-title">{draft.title || 'Безымянный квест'}</div>
-          <div className="offer-sub">
-            {draft.giver || 'Случайный прохожий'}
-            {draft.level ? ` · Ур. ${draft.level}` : ''}
-            {draft.zone ? ` · ${draft.zone}` : ''}
-            {source === 'remote' ? ' · выдано удалённо' : ''}
+    <div className="wow-frame">
+      <div className="wow-frame-inner">
+        <div className="wow-header">
+          <div className="wow-quest-icon">
+            <span className="icon-mark">!</span>
+            {draft.level ? <span className="icon-level">{draft.level}</span> : null}
+          </div>
+          <div className="wow-heading">
+            <div className="wow-title">{draft.title || 'Безымянный квест'}</div>
+            <div className="wow-meta">
+              {draft.giver || 'Случайный прохожий'}
+              {draft.zone ? ` · ${draft.zone}` : ''}
+              {source === 'remote' ? ' · выдано удалённо' : ''}
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="offer-body">
-        {draft.summary && <p className="offer-text">{draft.summary}</p>}
+        <div className="wow-content">
+          {draft.summary && <p className="wow-text">{draft.summary}</p>}
 
-        {objectives.length > 0 && (
-          <>
-            <div className="offer-section">Цели</div>
-            <ul className="offer-objectives">
-              {objectives.map((text, i) => (
-                <li key={i}>
-                  <span className="bullet">◆</span>
-                  {text}
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
+          {objectives.length > 0 && (
+            <>
+              <div className="wow-section">Цели</div>
+              <ul className="wow-objectives">
+                {objectives.map((text, i) => (
+                  <li key={i}>
+                    <span className="bullet">•</span>
+                    {text}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </div>
 
-        <div className="offer-section">Награда</div>
-        <div className="offer-reward">{draft.reward || 'Опыт и признание'}</div>
-      </div>
-
-      <div className="offer-foot">
-        <button className="btn primary" onClick={() => void accept()} disabled={busy}>
-          Принять
-        </button>
-        <button className="btn" onClick={() => void decline()} disabled={busy}>
-          Отказаться
-        </button>
+        <div className="wow-footer">
+          <div className="wow-reward">
+            <span className="coin" />
+            <span className="reward-text">{draft.reward || 'Опыт и признание'}</span>
+          </div>
+          <div className="wow-buttons">
+            <button className="wow-btn accept" onClick={() => void accept()} disabled={busy}>
+              Принять квест
+            </button>
+            <button className="wow-btn" onClick={() => void decline()} disabled={busy}>
+              Отказаться
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

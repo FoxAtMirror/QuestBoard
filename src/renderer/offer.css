@@ -1,43 +1,56 @@
-/* Окно предложения квеста — каменная рамка в духе игрового QuestFrame */
+/* ============================================================
+   Окно предложения квеста — в духе игрового QuestFrame:
+   скульптурная рамка с фаской, иконка квеста «!», гравированная
+   плашка названия, бронзовый скроллбар, кнопки с золотым бейджем.
+   ============================================================ */
 
 body.offer-page {
   display: flex;
   align-items: center;
   justify-content: center;
+  background: transparent;
 }
 
-.offer-frame {
+/* ---------- внешняя скульптурная рамка ---------- */
+
+.wow-frame {
+  position: relative;
   width: 100vw;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  border: 3px solid transparent;
-  border-image: linear-gradient(180deg, var(--gold-light) 0%, var(--gold) 16%, var(--gold-deep) 55%, var(--gold) 84%, var(--gold-light) 100%) 1;
-  border-radius: 6px;
+  height: 100vh;
+  padding: 7px;
+  border-radius: 5px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(0, 0, 0, 0.3)),
-    radial-gradient(120% 70% at 50% 0%, rgba(56, 44, 24, 0.96) 0%, rgba(22, 17, 9, 0.97) 60%, rgba(12, 9, 4, 0.98) 100%);
+    linear-gradient(180deg, #55493a 0%, #3a3124 10%, #221b12 48%, #1a140c 72%, #2e2619 100%);
   box-shadow:
-    0 0 0 1px #000,
-    0 18px 50px rgba(0, 0, 0, 0.8),
-    inset 0 0 26px rgba(0, 0, 0, 0.6);
-  color: var(--text);
-  overflow: hidden;
-  animation: offer-in 0.22s ease;
+    inset 0 0 0 1px #0a0805,
+    inset 0 1px 0 1px rgba(255, 232, 170, 0.32),
+    inset 0 -2px 2px rgba(0, 0, 0, 0.75),
+    0 16px 44px rgba(0, 0, 0, 0.8);
+  animation: offer-in 0.2s ease;
 }
 
-.offer-frame.waiting {
-  align-items: center;
-  justify-content: center;
+/* золотая окантовка по периметру */
+.wow-frame::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 1px solid rgba(217, 180, 99, 0.38);
+  border-radius: 3px;
+  pointer-events: none;
+}
+
+.wow-frame.waiting {
+  display: grid;
+  place-items: center;
   color: var(--gold);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   font-family: 'Cinzel', Georgia, serif;
 }
 
 @keyframes offer-in {
   from {
     opacity: 0;
-    transform: scale(0.94);
+    transform: scale(0.95);
   }
   to {
     opacity: 1;
@@ -45,118 +58,261 @@ body.offer-page {
   }
 }
 
-.offer-head {
+.wow-frame-inner {
+  position: relative;
+  z-index: 1;
+  height: 100%;
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  background: linear-gradient(180deg, #3d3019 0%, #261b0d 65%, #1a1207 100%);
-  border-bottom: 1px solid var(--gold-dark);
-  box-shadow: inset 0 1px 0 rgba(255, 226, 160, 0.22);
+  flex-direction: column;
+  border: 1px solid rgba(0, 0, 0, 0.85);
+  background:
+    linear-gradient(180deg, rgba(38, 30, 18, 0.97), rgba(14, 10, 5, 0.99));
+  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.7);
 }
 
-.offer-mark {
-  width: 30px;
-  height: 30px;
+/* ---------- шапка с иконкой квеста ---------- */
+
+.wow-header {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 11px;
+  background:
+    linear-gradient(180deg, #564734 0%, #3c3221 38%, #2a2216 72%, #1d170e 100%);
+  border-bottom: 1px solid rgba(217, 180, 99, 0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 235, 175, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.6),
+    0 2px 6px rgba(0, 0, 0, 0.55);
+}
+
+.wow-quest-icon {
+  position: relative;
+  width: 46px;
+  height: 46px;
   flex: none;
   display: grid;
   place-items: center;
-  border-radius: 50%;
-  font-family: 'Cinzel', serif;
-  font-weight: 700;
-  font-size: 17px;
-  color: #3a2a08;
-  background: radial-gradient(circle at 35% 30%, var(--gold-light), var(--gold) 55%, #8a6a2f 100%);
+  background: linear-gradient(180deg, #efdcac 0%, #d8c394 55%, #b9a06c 100%);
+  border: 2px solid #a5822f;
   box-shadow:
-    0 0 0 1px #2a1f0a,
-    0 2px 8px rgba(0, 0, 0, 0.7),
-    inset 0 -2px 4px rgba(90, 60, 10, 0.6);
+    inset 0 0 0 1px rgba(60, 42, 12, 0.55),
+    inset 0 2px 6px rgba(255, 255, 255, 0.35),
+    0 0 0 1px #120d06,
+    0 2px 7px rgba(0, 0, 0, 0.65);
 }
 
-.offer-headings {
+.icon-mark {
+  font-family: 'Cinzel', Georgia, serif;
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1;
+  color: #a52f1c;
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.55),
+    0 -1px 1px rgba(90, 30, 10, 0.35);
+}
+
+.icon-level {
+  position: absolute;
+  right: -7px;
+  bottom: -7px;
+  min-width: 21px;
+  height: 21px;
+  padding: 0 4px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-family: 'Cinzel', Georgia, serif;
+  font-weight: 700;
+  font-size: 11px;
+  color: #2b1d05;
+  background: radial-gradient(circle at 35% 28%, #ffeeb6, #d2ab52 58%, #7c5d1d);
+  border: 1px solid #241a08;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.7),
+    inset 0 -2px 3px rgba(90, 66, 14, 0.6);
+}
+
+.wow-heading {
   min-width: 0;
 }
 
-.offer-title {
-  font-family: 'Cinzel', serif;
-  font-size: 17px;
+.wow-title {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 16.5px;
   font-weight: 700;
-  letter-spacing: 0.03em;
-  color: var(--quest-yellow);
+  letter-spacing: 0.02em;
+  color: #ffd100;
   text-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.9),
-    0 0 14px rgba(255, 209, 0, 0.22);
+    0 1px 0 rgba(0, 0, 0, 0.95),
+    0 0 16px rgba(255, 209, 0, 0.22);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.offer-sub {
-  margin-top: 2px;
+.wow-meta {
+  margin-top: 3px;
   font-size: 11.5px;
   font-style: italic;
-  color: var(--text-dim);
+  color: #b3a582;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.offer-body {
+/* ---------- текст квеста ---------- */
+
+.wow-content {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 12px 14px 14px;
+  padding: 11px 13px 12px;
 }
 
-.offer-text {
-  margin: 0 0 10px;
-  font-size: 14px;
-  line-height: 1.5;
-  color: #e3d5b2;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+.wow-content::-webkit-scrollbar {
+  width: 9px;
 }
 
-.offer-section {
+.wow-content::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.5);
+  border-left: 1px solid rgba(217, 180, 99, 0.25);
+}
+
+.wow-content::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #7b5f26, #3d2f12);
+  border: 1px solid #1c1408;
+  border-radius: 4px;
+}
+
+.wow-text {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: #e8e4d8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+}
+
+.wow-section {
   margin: 12px 0 5px;
-  font-family: 'Cinzel', serif;
-  font-size: 10.5px;
-  letter-spacing: 0.18em;
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 10px;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--gold-dark);
-  border-bottom: 1px solid rgba(122, 92, 34, 0.35);
+  color: #c9a95f;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+  border-bottom: 1px solid rgba(201, 169, 95, 0.25);
   padding-bottom: 3px;
 }
 
-.offer-objectives {
+.wow-objectives {
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-.offer-objectives li {
+.wow-objectives li {
   display: flex;
   gap: 7px;
   align-items: baseline;
   padding: 2px 0;
-  font-size: 13.5px;
-  color: #eadcb9;
-}
-
-.offer-objectives .bullet {
-  font-size: 9px;
-  color: var(--red);
-}
-
-.offer-reward {
-  font-size: 13.5px;
-  color: var(--quest-yellow);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-}
-
-.offer-foot {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-  padding: 10px 12px 12px;
-  background: linear-gradient(180deg, rgba(10, 7, 3, 0.2), rgba(20, 14, 7, 0.75));
-  border-top: 1px solid rgba(122, 92, 34, 0.4);
-}
-
-.offer-foot .btn {
-  padding: 7px 20px;
   font-size: 13px;
+  color: #f2e8c9;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+}
+
+.wow-objectives .bullet {
+  font-size: 13px;
+  line-height: 1;
+  color: #ffd100;
+}
+
+/* ---------- подвал с наградой и кнопками ---------- */
+
+.wow-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 12px 10px;
+  background: linear-gradient(180deg, rgba(46, 38, 24, 0.96), rgba(22, 17, 10, 0.99));
+  border-top: 1px solid rgba(217, 180, 99, 0.4);
+  box-shadow: inset 0 1px 0 rgba(255, 232, 170, 0.18);
+}
+
+.wow-reward {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+  color: #ffd100;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+}
+
+.wow-reward .reward-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wow-reward .coin {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 28%, #fff0b6, #d9a93f 58%, #7d5a12);
+  box-shadow:
+    0 0 0 1px #3a2a08,
+    inset 0 -2px 3px rgba(90, 60, 10, 0.55);
+}
+
+.wow-buttons {
+  display: flex;
+  gap: 8px;
+  flex: none;
+}
+
+.wow-btn {
+  padding: 7px 17px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #e6d7ae;
+  border: 1px solid #191206;
+  background: linear-gradient(180deg, #4d4231 0%, #342c1f 46%, #241e14 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 232, 170, 0.28),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.6),
+    0 2px 4px rgba(0, 0, 0, 0.55);
+  transition: filter 0.15s ease, transform 0.08s ease;
+}
+
+.wow-btn:hover {
+  filter: brightness(1.22);
+}
+
+.wow-btn:active {
+  transform: translateY(1px);
+}
+
+.wow-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.wow-btn.accept {
+  color: #ffe9a8;
+  border-color: #6b5118;
+  background: linear-gradient(180deg, #6d5627 0%, #4a3a19 48%, #31260f 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 238, 180, 0.35),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.6),
+    0 2px 5px rgba(0, 0, 0, 0.6);
 }
