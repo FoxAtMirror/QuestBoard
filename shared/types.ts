@@ -128,6 +128,13 @@ export interface QuestDraft {
   tags?: string[];
 }
 
+/** Предложение квеста, ждущее подтверждения (как окно «Принять квест» в WoW) */
+export interface QuestOffer {
+  id: string;
+  draft: QuestDraft;
+  source: QuestSource;
+}
+
 export const DEFAULT_SETTINGS: AppSettings = {
   alwaysOnTop: true,
   dockEnabled: true,

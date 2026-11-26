@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AppData,
   Quest,
@@ -26,18 +26,25 @@ export default function App() {
   const [query, setQuery] = useState('');
   const [toast, setToast] = useState<{ title: string; message: string } | null>(null);
   const [soundOn, setSoundOn] = useState(true);
+  const soundRef = useRef(true);
   const [hotEdge, setHotEdge] = useState(false);
 
   const reload = useCallback(async () => {
     const next = await window.questboard.getData();
     setData(next);
+    soundRef.current = next.settings.soundEnabled;
     setSoundOn(next.settings.soundEnabled);
   }, []);
 
   useEffect(() => {
     void reload();
     const offData = window.questboard.onDataChanged(() => void reload());
-    const offToast = window.questboard.onToast((payload) => setToast(payload));
+    const offToast = window.questboard.onToast((payload) => {
+      setToast(payload);
+      if (soundRef.current && payload.title.toLowerCase().includes('принят')) {
+        playQuestReceived();
+      }
+    });
     const offUi = window.questboard.onUiOpen((name) =>
       setPanel(name === 'settings' || name === 'share' ? name : 'new'),
     );
@@ -140,10 +147,9 @@ export default function App() {
   );
 
   async function handleCreate(draft: QuestDraft) {
-    const quest = await window.questboard.createQuest(draft);
+    // Квест не попадает в журнал сразу — сначала окно «Принять квест», как в WoW
+    await window.questboard.offerQuest(draft);
     setPanel(null);
-    setToast({ title: 'Квест получен!', message: quest.title });
-    if (soundOn) playQuestReceived();
   }
 
   async function handleUpdate(draft: QuestDraft) {

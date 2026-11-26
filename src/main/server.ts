@@ -11,6 +11,9 @@ import { Store } from './store';
  * открывает ссылку, вводит код и выдаёт нам задачу — она сразу появляется в журнале.
  */
 export class QuestServer extends EventEmitter {
+  /** Вызывается main-процессом: показать окно «Принять квест» */
+  onOffer: ((draft: QuestDraft) => string) | null = null;
+
   private server: http.Server | null = null;
   private store: Store;
   private port: number;
@@ -186,10 +189,11 @@ export class QuestServer extends EventEmitter {
         res.end(JSON.stringify({ error: 'Нужно название квеста' }));
         return;
       }
-      const quest = this.store.createQuest(draft, 'remote');
-      this.emit('quest-created', quest);
+      // Квест не создаётся сразу — он становится предложением и ждёт подтверждения
+      const id = this.onOffer ? this.onOffer(draft) : `q_${Date.now().toString(36)}`;
+      this.emit('quest-offered', draft);
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ ok: true, quest }));
+      res.end(JSON.stringify({ ok: true, status: 'offered', id }));
       return;
     }
 
@@ -304,7 +308,7 @@ function renderGivePage(prefillCode: string, requireCode: boolean): string {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Ошибка');
       st.className = 'ok';
-      st.textContent = '✓ Квест «' + data.quest.title + '» выдан!';
+      st.textContent = '✓ Квест «' + payload.title + '» отправлен! Он появится в журнале, когда владелец примет его.';
       f.reset();
     } catch (err) {
       st.className = 'err';

@@ -4,6 +4,7 @@ import {
   DEFAULT_SETTINGS,
   Quest,
   QuestDraft,
+  QuestOffer,
   QuestState,
   ServerInfo,
 } from '@shared/types';
@@ -85,6 +86,7 @@ function demoData(): AppData {
 export function installMockApi() {
   if (window.questboard) return;
   let data = demoData();
+  const mockOffers = new Map<string, QuestOffer>();
   const listeners = { data: new Set<() => void>(), toast: new Set<(p: { title: string; message: string }) => void>() };
 
   const notify = () => listeners.data.forEach((cb) => cb());
@@ -159,6 +161,23 @@ export function installMockApi() {
       window.open(url);
     },
     hide: async () => undefined,
+    offerQuest: async (draft: QuestDraft) => {
+      const id = `offer_${Math.random().toString(36).slice(2, 8)}`;
+      mockOffers.set(id, { id, draft, source: 'local' });
+      return id;
+    },
+    getOffer: async (id: string) => mockOffers.get(id) ?? null,
+    acceptOffer: async (id: string) => {
+      const offer = mockOffers.get(id);
+      if (!offer) return null;
+      mockOffers.delete(id);
+      const quest = await window.questboard.createQuest(offer.draft);
+      return quest;
+    },
+    declineOffer: async (id: string) => {
+      mockOffers.delete(id);
+      return true;
+    },
     setClickThrough: async () => undefined,
     resizeStart: async () => undefined,
     resizeMove: async () => undefined,

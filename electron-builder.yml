@@ -2,7 +2,7 @@ appId: com.foxatmirror.questboard
 productName: QuestBoard
 copyright: © 2026 Vlad
 directories:
-  output: release
+  output: release-new
   buildResources: build
 files:
   - dist/**/*

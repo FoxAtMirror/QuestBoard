@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { AppData, AppSettings, Player, Quest, QuestDraft, ServerInfo } from '../../shared/types';
+import { AppData, AppSettings, Player, Quest, QuestDraft, QuestOffer, ServerInfo } from '../../shared/types';
 
 /**
  * Мост main → renderer. Renderer работает в изолированном контексте,
@@ -22,6 +22,12 @@ const api = {
   openDataFolder: (): Promise<void> => ipcRenderer.invoke('app:openDataFolder'),
   openExternal: (url: string): Promise<void> => ipcRenderer.invoke('app:openExternal', url),
   hide: (): Promise<void> => ipcRenderer.invoke('app:hide'),
+
+  /** Предложить квест: показывается окно «Принять квест» */
+  offerQuest: (draft: QuestDraft): Promise<string> => ipcRenderer.invoke('offer:create', draft),
+  getOffer: (id: string): Promise<QuestOffer | null> => ipcRenderer.invoke('offer:get', id),
+  acceptOffer: (id: string): Promise<Quest | null> => ipcRenderer.invoke('offer:accept', id),
+  declineOffer: (id: string): Promise<boolean> => ipcRenderer.invoke('offer:decline', id),
 
   /** Пропускать клики мыши сквозь окно */
   setClickThrough: (enabled: boolean): Promise<void> => ipcRenderer.invoke('window:clickThrough', enabled),

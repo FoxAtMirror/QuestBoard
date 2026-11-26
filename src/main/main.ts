@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import { Store } from './store';
 import { QuestServer } from './server';
 import { applySettingsToWindow, createMainWindow, getMainWindow } from './window';
-import { AppSettings, Player, Quest, QuestDraft, ServerInfo } from '../../shared/types';
+import { AppSettings, Player, Quest, QuestDraft, QuestOffer, ServerInfo } from '../../shared/types';
 
 const isDev = process.env.NODE_ENV === 'development';
 const DEV_URL = process.env.VITE_DEV_SERVER_URL ?? 'http://localhost:5173';
@@ -16,6 +16,10 @@ let quitting = false;
 
 /** Состояние ресайза окна перетаскиванием уголка */
 const resizeState = { startY: 0, startHeight: 0 };
+
+/** Предложения квестов, ждущие подтверждения (как «Принять квест» в WoW) */
+const pendingOffers = new Map<string, QuestOffer>();
+let offerWindow: BrowserWindow | null = null;
 
 /** Генерируем код доступа: 6 символов без двусмысленных (0/O, 1/I) */
 function generateCode(): string {
@@ -178,6 +182,30 @@ function setupIpc() {
     resizeState.startY = 0;
     resizeState.startHeight = 0;
   });
+
+  // ---------- предложения квестов (окно «Принять квест») ----------
+
+  ipcMain.handle('offer:create', (_e, draft: QuestDraft) => offerQuest(draft, 'local'));
+
+  ipcMain.handle('offer:get', (_e, id: string) => pendingOffers.get(id) ?? null);
+
+  ipcMain.handle('offer:accept', (_e, id: string) => acceptOfferById(id));
+
+  ipcMain.handle('offer:decline', (_e, id: string) => declineOfferById(id));
+}
+
+function closeOfferWindow() {
+  if (offerWindow && !offerWindow.isDestroyed()) {
+    offerWindow.close();
+  }
+  offerWindow = null;
+}
+
+function notifyToast(title: string, message: string) {
+  const win = getMainWindow();
+  if (win && !win.isDestroyed()) {
+    win.webContents.send('toast', { title, message });
+  }
 }
 
 /** Глобальные хоткеи: как в игре — журнал вызывается одной комбинацией клавиш */
@@ -192,6 +220,108 @@ function registerHotkeys() {
     });
   } catch (err) {
     console.error('[hotkeys] не удалось зарегистрировать:', err);
+  }
+}
+
+/**
+ * Создать предложение квеста и показать окно «Принять квест» по центру экрана.
+ * В журнал квест попадёт только после принятия.
+ */
+function offerQuest(draft: QuestDraft, source: Quest['source'], silent = false): string {
+  const id = `offer_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  pendingOffers.set(id, { id, draft, source });
+  if (!silent) {
+    openOfferWindow(id);
+    notifyToast('Предложение квеста', draft.title);
+  }
+  return id;
+}
+
+/** Принять предложение — квест попадает в журнал */
+function acceptOfferById(id: string): Quest | null {
+  const offer = pendingOffers.get(id);
+  if (!offer) return null;
+  pendingOffers.delete(id);
+  const quest = store.createQuest(offer.draft, offer.source);
+  // Принятый квест сразу в журнале — как в игре
+  store.updateQuest(quest.id, { state: 'active' });
+  closeOfferWindow();
+  notifyToast('Квест принят!', quest.title);
+  return quest;
+}
+
+/** Отклонить предложение — квест в журнал не попадает */
+function declineOfferById(id: string): boolean {
+  const offer = pendingOffers.get(id);
+  pendingOffers.delete(id);
+  closeOfferWindow();
+  notifyToast('Квест отклонён', offer?.draft.title ?? '');
+  return true;
+}
+
+function openOfferWindow(id: string) {
+  if (offerWindow && !offerWindow.isDestroyed()) {
+    offerWindow.close();
+    offerWindow = null;
+  }
+
+  const { workArea } = screen.getPrimaryDisplay();
+  const width = 470;
+  const height = 430;
+
+  const win = new BrowserWindow({
+    width,
+    height,
+    x: Math.round(workArea.x + (workArea.width - width) / 2),
+    y: Math.round(workArea.y + (workArea.height - height) / 2),
+    frame: false,
+    transparent: true,
+    backgroundColor: '#00000000',
+    hasShadow: false,
+    resizable: false,
+    maximizable: false,
+    fullscreenable: false,
+    skipTaskbar: true,
+    show: false,
+    title: 'QuestBoard — предложение квеста',
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false,
+    },
+  });
+
+  offerWindow = win;
+  win.setAlwaysOnTop(true, 'screen-saver');
+
+  const devUrl = process.env.VITE_DEV_SERVER_URL;
+  if (devUrl) {
+    void win.loadURL(`${devUrl}/offer.html?id=${encodeURIComponent(id)}`);
+  } else {
+    void win.loadFile(path.join(__dirname, '..', 'dist', 'offer.html'), { query: { id } });
+  }
+
+  win.once('ready-to-show', () => win.showInactive());
+  win.on('closed', () => {
+    offerWindow = null;
+  });
+
+  // Служебный режим: снимок окна предложения
+  const shotOffer = process.env.QUESTBOARD_SHOT_OFFER;
+  if (shotOffer) {
+    win.webContents.once('did-finish-load', () => {
+      setTimeout(async () => {
+        try {
+          const image = await win.webContents.capturePage();
+          fs.writeFileSync(shotOffer, image.toPNG());
+          console.log('[shot-offer] сохранено:', shotOffer);
+        } catch (err) {
+          console.error('[shot-offer] ошибка:', err);
+        }
+        app.quit();
+      }, 1200);
+    });
   }
 }
 
@@ -255,6 +385,21 @@ function runSelfTest() {
   store.deleteQuest(quest.id);
   check('квест удаляется', !store.quests.some((q) => q.id === quest.id));
 
+  // Предложение квеста: принятие и отклонение
+  const offerId = offerQuest({ title: 'Оффер-тест', objectives: ['Цель'] }, 'local', true);
+  check('предложение создано', pendingOffers.has(offerId));
+  check('до принятия квеста в журнале нет', !store.quests.some((q) => q.title === 'Оффер-тест'));
+
+  const accepted = acceptOfferById(offerId);
+  check('после принятия квест в журнале', accepted !== null && store.quests.some((q) => q.id === accepted.id));
+  check('принятый квест активен', accepted?.state === 'active');
+  check('цели перенеслись', accepted?.objectives.length === 1);
+
+  const declinedId = offerQuest({ title: 'Оффер-отказ' }, 'local', true);
+  declineOfferById(declinedId);
+  check('отклонённый квест не попал в журнал', !store.quests.some((q) => q.title === 'Оффер-отказ'));
+  check('предложение удалено из очереди', !pendingOffers.has(declinedId));
+
   console.log('\n[selftest]\n' + results.join('\n'));
   app.exit(results.some((r) => r.startsWith('FAIL')) ? 1 : 0);
 }
@@ -301,6 +446,9 @@ function bootstrap() {
       current.webContents.send('toast', { title: 'Новый квест!', message: quest.title });
     }
   });
+
+  // Квест, выданный с другого устройства, приходит как предложение — с окном «Принять»
+  server.onOffer = (draft: QuestDraft) => offerQuest(draft, 'remote');
 
   server.on('started', notifyServerChanged);
   server.on('stopped', notifyServerChanged);
